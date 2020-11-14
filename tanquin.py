@@ -141,8 +141,7 @@ class AStar():
 
         while len(open_set):
             _, current = heappop(open_set)
-            if current in closed_set:
-                print(current)
+            print(len(closed_set))
             closed_set.add(current)
             if current.is_goal():
                 return cls.reconstract_path(came_from, current)
@@ -168,13 +167,13 @@ class AStar():
             
         return None
 
-
-
-
-
-
 if __name__ == "__main__":
-    rand_board = Board.goal().next_states()[1].next_states()[1] #Board.random()
+    #rand_board = Board.goal()
+    #steps = 1000
+    #for _ in range(steps):
+    #    next_states = rand_board.next_states()
+    #    rand_board = random.choice(next_states)
+    rand_board = Board.random()
     print(rand_board)
 
     path = AStar.a_star(rand_board, Board.h2)
