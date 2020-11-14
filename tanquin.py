@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from heapq import heappop, heappush
 from collections import defaultdict
 import datetime
+import itertools
 
 
 
@@ -49,13 +50,20 @@ class Board(State):
         return (x[0], y[0])
     
     @classmethod
-    def random(cls):
-        choices = random.sample(set(cls.values), len(cls.values))
-        choices = np.array(choices)
-        choices = choices.reshape((cls.width, cls.height))
-        res = cls()
-        res.board = choices
-        return res
+    def random(cls, from_goal=None):
+        if from_goal:
+            res = cls.goal()
+            for _ in range(from_goal):
+                next_states = res.next_states()
+                res = random.choice(next_states)
+            return res
+        else:
+            choices = random.sample(set(cls.values), len(cls.values))
+            choices = np.array(choices)
+            choices = choices.reshape((cls.width, cls.height))
+            res = cls()
+            res.board = choices
+            return res
 
     @classmethod
     def goal(cls):
@@ -118,6 +126,34 @@ class Board(State):
                 abs(index[1] - correct_position[1])
         return total
 
+class PriorityQueue():
+    REMOVED = '<removed-task>'
+    def __init__(self):
+        self.pq = []
+        self.entry_finder = {}
+        self.counter = itertools.count()
+
+
+    def add_task(self, task, priority=0):
+        if task in self.entry_finder:
+            self.remove_task(task)
+        count = next(self.counter)
+        entry = [priority, count, task]
+        self.entry_finder[task] = entry
+        heappush(self.pq, entry)
+
+    def remove_task(self, task):
+        entry = self.entry_finder.pop(task)
+        entry[-1] = self.REMOVED
+
+    def pop_task(self):
+        while self.pq:
+            priority, count, task = heappop(self.pq)
+            if task is not self.REMOVED:
+                del self.entry_finder[task]
+                return task
+        return None
+
 class AStar():
     @staticmethod
     def reconstract_path(came_from, current):
@@ -130,7 +166,8 @@ class AStar():
     
     @classmethod
     def a_star(cls, start, heuristic, distance = lambda state1, state2: 1):
-        open_set = [(heuristic(start), start)]
+        open_set = PriorityQueue()
+        open_set.add_task(start, priority=heuristic(start))
         closed_set = set()
         came_from = {}
         g_score = defaultdict(lambda: float('inf'))
@@ -139,15 +176,16 @@ class AStar():
         f_score = defaultdict(lambda: float('inf'))
         f_score[start] = heuristic(start)
 
-        while len(open_set):
-            _, current = heappop(open_set)
-            print(len(closed_set))
+        current = open_set.pop_task()
+        while current:
             closed_set.add(current)
             if current.is_goal():
                 return cls.reconstract_path(came_from, current)
 
             for neighbor in current.next_states():
                 if neighbor in closed_set:
+                    if len(closed_set) % 500 ==0:
+                        print(len(closed_set))
                     continue
                 
                 tentative_g_score = g_score[current] + distance(current, neighbor)
@@ -155,24 +193,11 @@ class AStar():
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
                     f_score[neighbor] = g_score[neighbor] + heuristic(neighbor)
-                    # TODO improve time complexity by better finding a neighbor in open_set
-                    # https://docs.python.org/3.7/library/heapq.html#priority-queue-implementation-notes
-                    # also reply to this https://stackoverflow.com/questions/28488674/a-search-in-python-priority-queue
-                    for index, element in enumerate(open_set):
-                        if element[1] == neighbor:
-                            open_set[index] = (f_score[neighbor], neighbor)
-                            break
-                    else:
-                        heappush(open_set, (f_score[neighbor], neighbor))
-            
+                    open_set.add_task(neighbor, priority=f_score[neighbor])
+            current = open_set.pop_task()
         return None
 
 if __name__ == "__main__":
-    #rand_board = Board.goal()
-    #steps = 1000
-    #for _ in range(steps):
-    #    next_states = rand_board.next_states()
-    #    rand_board = random.choice(next_states)
     rand_board = Board.random()
     print(rand_board)
 
