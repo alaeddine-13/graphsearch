@@ -6,6 +6,7 @@ from heapq import heappop, heappush
 from collections import defaultdict
 import datetime
 import itertools
+from sympy.combinatorics.permutations import Permutation
 
 
 
@@ -19,10 +20,15 @@ class State(ABC):
     def next_states(self):
         pass
 
+    @abstractmethod
+    def is_solvable(self):
+        pass
+
+
 class Board(State):
     width = 3
     height = 3
-    values = [' '] + list(range(1, width * height))
+    values = list(range(width * height))
     
     def __init__(self, board=None):
         self.board = np.zeros((self.width, self.height))
@@ -30,7 +36,7 @@ class Board(State):
             self.board = board
  
     def next_states(self):
-        empty_x, empty_y = self.find_position(' ')
+        empty_x, empty_y = self.find_position(0)
         boards = []
         neighbors = [(empty_x -1, empty_y), (empty_x, empty_y -1), (empty_x, empty_y +1), (empty_x +1, empty_y)]
         for neighbor in neighbors:
@@ -39,6 +45,19 @@ class Board(State):
                 board[neighbor[0]][neighbor[1]], board[empty_x][empty_y] = board[empty_x][empty_y], board[neighbor[0]][neighbor[1]]
                 boards.append(Board(board=board))
         return boards
+    
+    def is_solvable(self):
+        """
+        A board is solvable only if the parity of the permutation (signature) is the same
+        as the parity of the empty cell.
+        Check https://fr.wikipedia.org/wiki/Taquin#Configurations_solubles_et_insolubles
+        """
+        permutation_parity = Permutation(self.board.flatten()).signature()
+        empty_position = self.find_position(0)
+        distance = empty_position[0] + empty_position[1]
+        empty_parity = 1 if (distance%2 ==0) else -1
+        return empty_parity == permutation_parity
+
         
     @classmethod
     def valid_position(cls, position):
@@ -80,17 +99,12 @@ class Board(State):
         res = ""
         for row in self.board:
             for value in row:
-                res += str(value) + " "
+                res += (str(value) if value !=0 else ' ') + " "
             res += "\n"
         return res
     
     def __repr__(self):
-        res = "\n"
-        for row in self.board:
-            for value in row:
-                res += str(value) + " "
-            res += "\n"
-        return res
+        return "\n" + self.__str__()
 
     def __hash__(self):
         return hash(str(self.board))
@@ -166,6 +180,8 @@ class AStar():
     
     @classmethod
     def a_star(cls, start, heuristic, distance = lambda state1, state2: 1):
+        if not start.is_solvable():
+            return None
         open_set = PriorityQueue()
         open_set.add_task(start, priority=heuristic(start))
         closed_set = set()
@@ -184,8 +200,6 @@ class AStar():
 
             for neighbor in current.next_states():
                 if neighbor in closed_set:
-                    if len(closed_set) % 500 ==0:
-                        print(len(closed_set))
                     continue
                 
                 tentative_g_score = g_score[current] + distance(current, neighbor)
@@ -198,12 +212,20 @@ class AStar():
         return None
 
 if __name__ == "__main__":
+    
     rand_board = Board.random()
     print(rand_board)
-
+    
     path = AStar.a_star(rand_board, Board.h2)
-    for index, element in enumerate(path):
-        print("step", index)
-        print(element)
+    
+    if path:
+        print("path found")
+        for index, board in enumerate(path):
+            print("step", index)
+            print(board)
+    else :
+        print("no path is found. The state is considered as not solvable")
+
+        
 
     
