@@ -7,6 +7,7 @@ from collections import defaultdict
 import datetime
 import itertools
 from sympy.combinatorics.permutations import Permutation
+import math
 
 
 
@@ -22,6 +23,10 @@ class State(ABC):
 
     @abstractmethod
     def is_solvable(self):
+        pass
+
+    @abstractmethod
+    def render(self):
         pass
 
 
@@ -57,6 +62,18 @@ class Board(State):
         distance = empty_position[0] + empty_position[1]
         empty_parity = 1 if (distance%2 ==0) else -1
         return empty_parity == permutation_parity
+    
+    def render(self):
+        td_template = "<td>{value}</td>"
+        tr_template = "<tr>{cells}</tr>"
+        table_template = "<table>{rows}</table>"
+        rows = []
+        for row in self.board:
+            tds = []
+            for value in row:
+                tds.append(td_template.format(value=(str(value) if value !=0 else ' ') + " "))
+            rows.append(tr_template.format(cells="\n".join(tds)))
+        return table_template.format(rows="\n".join(rows))
 
         
     @classmethod
@@ -83,6 +100,10 @@ class Board(State):
             res = cls()
             res.board = choices
             return res
+    
+    @classmethod
+    def random_from_goal(cls):
+        return cls.random(from_goal=500)
 
     @classmethod
     def goal(cls):
@@ -179,7 +200,8 @@ class AStar():
         return total_path
     
     @classmethod
-    def a_star(cls, start, heuristic, distance = lambda state1, state2: 1):
+    def a_star(cls, start, computation_progress = None, 
+               heuristic = None, distance = lambda state1, state2: 1):
         if not start.is_solvable():
             return None
         open_set = PriorityQueue()
@@ -195,6 +217,9 @@ class AStar():
         current = open_set.pop_task()
         while current:
             closed_set.add(current)
+            if len(closed_set) %1000 == 0:
+                computation_progress.update(len(closed_set), math.factorial(start.width * start.height))
+
             if current.is_goal():
                 return cls.reconstract_path(came_from, current)
 
@@ -216,7 +241,7 @@ if __name__ == "__main__":
     rand_board = Board.random()
     print(rand_board)
     
-    path = AStar.a_star(rand_board, Board.h2)
+    path = AStar.a_star(rand_board, heuristic=Board.h2)
     
     if path:
         print("path found")
