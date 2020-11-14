@@ -1,1 +1,4 @@
 sympy
+streamlit
+numpy
+pandas
