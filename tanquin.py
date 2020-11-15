@@ -29,6 +29,11 @@ class State(ABC):
     def render(self):
         pass
 
+    @abstractmethod
+    def update_computation_progress(self, computation_progress):
+        pass
+        
+
 
 class Board(State):
     width = 3
@@ -48,7 +53,7 @@ class Board(State):
             if self.valid_position(neighbor):
                 board = self.board.copy()
                 board[neighbor[0]][neighbor[1]], board[empty_x][empty_y] = board[empty_x][empty_y], board[neighbor[0]][neighbor[1]]
-                boards.append(Board(board=board))
+                boards.append(self.__class__(board=board))
         return boards
     
     def is_solvable(self):
@@ -74,7 +79,10 @@ class Board(State):
                 tds.append(td_template.format(value=(str(value) if value !=0 else ' ') + " "))
             rows.append(tr_template.format(cells="\n".join(tds)))
         return table_template.format(rows="\n".join(rows))
-
+    
+    def update_computation_progress(self, computation_progress, processed):
+        if computation_progress:
+            computation_progress.update(processed, math.factorial(self.width * self.height))
         
     @classmethod
     def valid_position(cls, position):
@@ -133,16 +141,6 @@ class Board(State):
     def is_goal(self):
         return self == self.goal()
 
-    def __lt__(self, other):
-        lt_comparison = self.board < other.board
-        eq_comparison = self.board < other.board
-        for index, element in np.ndenumerate(lt_comparison):
-            if element:
-                return True
-            elif not eq_comparison[index[0]][index[1]]:
-                return False
-        return False
-
     
     @classmethod
     def h1(cls,state):
@@ -160,6 +158,147 @@ class Board(State):
             total += abs(index[0] - correct_position[0]) + \
                 abs(index[1] - correct_position[1])
         return total
+
+
+class Maze(State):
+    width = 10
+    height = 10
+    wall = "X"
+    empty = " "
+    player = "O"
+    start = "S"
+    goal = "F"
+    start_position = (0, 0)
+    goal_position = (width-1, height-1)
+    
+    def __init__(self, maze=None):
+        self.maze = np.full((self.width, self.height), self.empty)
+        if maze is not None:
+            self.maze = maze
+        self.start_position = (0, 0)
+        self.goal_position = (self.width-1, self.height-1)
+ 
+    def next_states(self):
+        player_x, player_y = self.find_position(self.player)
+        mazes = []
+        neighbors = [(player_x -1, player_y), (player_x, player_y -1), (player_x, player_y +1), (player_x +1, player_y)]
+        for neighbor in neighbors:
+            if self.valid_position(neighbor):
+                maze = self.maze.copy()
+                maze[neighbor[0]][neighbor[1]], maze[player_x][player_y] = self.player, self.empty
+                mazes.append(self.__class__(maze=maze))
+        return mazes
+
+    def render(self):
+        wall_color = "#919294"
+        start_color = "#9ca9ff"
+        end_color = "#a1ff85"
+        empty_color = "#ffffff"
+        td_template = '<td style="background-color:{color}">{value}</td>'
+        tr_template = "<tr>{cells}</tr>"
+        table_template = "<table>{rows}</table>"
+        rows = []
+        for x, row in enumerate(self.maze):
+            tds = []
+            for y, value in enumerate(row):
+                to_show = value
+                color = None
+                if (x, y) == self.start_position:
+                    color = start_color
+                elif (x, y) == self.goal_position:
+                    color = end_color
+                elif value == self.wall:
+                    color = wall_color
+                else:
+                    color = empty_color
+                
+                td = td_template.format(value=to_show, color = color)
+                tds.append(td)
+            rows.append(tr_template.format(cells="\n".join(tds)))
+        return table_template.format(rows="\n".join(rows))
+    
+    def update_computation_progress(self, computation_progress, processed):
+        if computation_progress:
+            computation_progress.update(processed, 1 + len(np.where(self.maze == self.empty)))
+
+    def is_solvable(self):
+        return True
+
+    def valid_position(self, position):
+        return self.width>position[0]>=0 and self.height>position[1]>=0 and \
+            self.maze[position[0]][position[1]] == self.empty
+            
+
+    def find_position(self, value):
+        x, y = np.where(self.maze == value)
+        return (x[0], y[0])
+    
+    @classmethod
+    def random(cls):
+        pass
+    
+    @classmethod
+    def fixture_10_by_10(cls):
+        res = cls()
+        walls = [
+            (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 9),
+            (1, 5), (1, 7), (1, 8), (1, 9),
+            (2, 3), (2, 5),
+            (3, 1), (3, 3), (3, 5), (3, 7), (3, 8),
+            (4, 1), (4, 3), (4, 5), (4, 7),
+            (5, 1), (5, 2), (5, 3), (5, 5), (5, 7), (5, 9),
+            (6, 1), (6, 5), (6, 7), (6, 9),
+            (7, 1), (7, 3), (7, 4), (7, 5), (7, 7), (7, 9),
+            (8, 0), (8, 7), (8, 9),
+            (9, 2), (9, 3), (9, 4), (9, 5), (9, 6), (9, 7),
+        ]
+        for index, element in np.ndenumerate(res.maze):
+            if index in walls:
+                res.maze[index[0]][index[1]] = cls.wall
+        res.maze[cls.start_position[0]][cls.start_position[1]] = cls.player
+        return res
+
+
+    def __eq__(self, other):
+        return np.array_equal(self.maze, other.maze)
+    
+    def __str__(self):
+        res = ""
+        for x, row in enumerate(self.maze):
+            for y, value in enumerate(row):
+                to_show = value
+                if (x, y)==self.goal_position and value==self.empty:
+                    to_show = self.goal
+                elif (x, y)==self.start_position and value==self.empty:
+                    to_show = self.start
+                
+                res += value + " "
+            res += "\n"
+        return res
+    
+    def __repr__(self):
+        return "\n" + self.__str__()
+
+    def __hash__(self):
+        return hash(str(self.maze))
+    
+    def is_goal(self):
+        return self.find_position(self.player) == self.goal_position
+     
+    @classmethod
+    def h1(cls, state):
+        player_postion = state.find_position(state.player)
+        return abs(player_postion[0] - state.goal_position[0]) + \
+            abs(player_postion[1] - state.goal_position[1])
+     
+    @classmethod
+    def h2(cls, state):
+        player_postion = state.find_position(state.player)
+        x = player_postion[0] - state.goal_position[0]
+        y = player_postion[1] - state.goal_position[1]
+        return math.sqrt(x*x + y*y)
+
+
 
 class PriorityQueue():
     REMOVED = '<removed-task>'
@@ -218,7 +357,7 @@ class AStar():
         while current:
             closed_set.add(current)
             if len(closed_set) %1000 == 0:
-                computation_progress.update(len(closed_set), math.factorial(start.width * start.height))
+                start.update_computation_progress(computation_progress, len(closed_set))
 
             if current.is_goal():
                 return cls.reconstract_path(came_from, current)
@@ -237,17 +376,23 @@ class AStar():
         return None
 
 if __name__ == "__main__":
+    maze_or_board = "maze"
+    if maze_or_board == "maze":
+        start_maze = Maze.fixture_10_by_10()
+        print(start_maze)
+
+        path = AStar.a_star(start_maze, heuristic=Maze.h1)
     
-    rand_board = Board.random()
-    print(rand_board)
-    
-    path = AStar.a_star(rand_board, heuristic=Board.h2)
+    elif maze_or_board == "board":
+        start_board = Board.random()
+        print(start_board)
+        path = AStar.a_star(start_board, heuristic=Board.h2)
     
     if path:
         print("path found")
-        for index, board in enumerate(path):
+        for index, state in enumerate(path):
             print("step", index)
-            print(board)
+            print(state)
     else :
         print("no path is found. The state is considered as not solvable")
 

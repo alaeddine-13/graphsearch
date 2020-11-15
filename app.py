@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import time
-from tanquin import Board, AStar
+from tanquin import Board, AStar, Maze
 from operator import itemgetter
 
 class ComputationProgress():
@@ -32,6 +32,19 @@ games = {
             "generate": {
                 "Generate a random state from all states (whether solvable or not)": Board.random,
                 "Generate a random state from solvable states only": Board.random_from_goal
+            }
+        }
+    },
+
+    "Maze": {
+        "class": Maze,
+        "params":{
+            "heuristic": {
+                "Manhatten distance to the goal postion": Maze.h1,
+                "Euclidean distance to the goal position": Maze.h2
+            },
+            "generate": {
+                "Fixed 10 by 10 maze": Maze.fixture_10_by_10,
             }
         }
     }
@@ -92,5 +105,4 @@ if generate_button:
     else :
         computation_progress.fail()
         st.write("no path is found. The state is considered as not solvable")
-
 
