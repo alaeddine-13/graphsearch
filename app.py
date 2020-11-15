@@ -11,7 +11,7 @@ class ComputationProgress():
         self.bar = st.progress(0)
 
     def update(self, iteration, maximum):
-        self.latest_iteration.text(f'Discovered {iteration} out of {maximum} search space states')
+        self.latest_iteration.text(f'Discovered {iteration} out of {maximum} states in the search space')
         self.bar.progress(int(iteration*100/maximum))
     
     def done(self):
@@ -27,7 +27,7 @@ games = {
         "params":{
             "heuristic": {
                 "Number of mis-placed pieces": Board.h1,
-                "Sum of manhatten distances between each piece and it's correct position": Board.h2
+                "Sum of manhatten distances to each correct position": Board.h2
             },
             "generate": {
                 "Generate a random state from all states (whether solvable or not)": Board.random,
