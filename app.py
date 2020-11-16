@@ -2,24 +2,12 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import time
-from tanquin import Board, AStar, Maze
 from operator import itemgetter
+from state import Board, Maze
+from strategy import AStar, Dijkstra
+from utils import ComputationProgress
 
-class ComputationProgress():
-    def __init__(self):
-        self.latest_iteration = st.empty()
-        self.bar = st.progress(0)
 
-    def update(self, iteration, maximum):
-        self.latest_iteration.text(f'Discovered {iteration} out of {maximum} states in the search space')
-        self.bar.progress(int(iteration*100/maximum))
-    
-    def done(self):
-        self.latest_iteration.markdown('## Done')
-        self.bar.progress(100)
-    
-    def fail(self):
-        self.latest_iteration.text('No Path is found')
 
 games = {
     "Taquin": {
@@ -53,7 +41,6 @@ games = {
 strategies = {
     "A*": {
         "class": AStar,
-        "method": AStar.a_star,
         "routable_params": ["heuristic"]
     }
 }
@@ -93,7 +80,7 @@ if generate_button:
     st.markdown(start.render(), unsafe_allow_html=True)
     computation_progress = ComputationProgress()
 
-    path = chosen_strategy["method"](
+    path = chosen_strategy["class"].solve(
         start, computation_progress=computation_progress,
         **strategy_routable_params)
     if path:

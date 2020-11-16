@@ -1,15 +1,8 @@
 import numpy as np
-import random
-from typing import List
-from abc import ABC, abstractmethod
-from heapq import heappop, heappush
-from collections import defaultdict
-import datetime
-import itertools
-from sympy.combinatorics.permutations import Permutation
 import math
-
-
+import random
+from abc import ABC, abstractmethod
+from sympy.combinatorics.permutations import Permutation
 
 
 class State(ABC):
@@ -297,105 +290,3 @@ class Maze(State):
         x = player_postion[0] - state.goal_position[0]
         y = player_postion[1] - state.goal_position[1]
         return math.sqrt(x*x + y*y)
-
-
-
-class PriorityQueue():
-    REMOVED = '<removed-task>'
-    def __init__(self):
-        self.pq = []
-        self.entry_finder = {}
-        self.counter = itertools.count()
-
-
-    def add_task(self, task, priority=0):
-        if task in self.entry_finder:
-            self.remove_task(task)
-        count = next(self.counter)
-        entry = [priority, count, task]
-        self.entry_finder[task] = entry
-        heappush(self.pq, entry)
-
-    def remove_task(self, task):
-        entry = self.entry_finder.pop(task)
-        entry[-1] = self.REMOVED
-
-    def pop_task(self):
-        while self.pq:
-            priority, count, task = heappop(self.pq)
-            if task is not self.REMOVED:
-                del self.entry_finder[task]
-                return task
-        return None
-
-class AStar():
-    @staticmethod
-    def reconstract_path(came_from, current):
-        total_path = [current]
-        while current in came_from.keys():
-            current = came_from[current]
-            total_path.append(current)
-        total_path.reverse()
-        return total_path
-    
-    @classmethod
-    def a_star(cls, start, computation_progress = None, 
-               heuristic = None, distance = lambda state1, state2: 1):
-        if not start.is_solvable():
-            return None
-        open_set = PriorityQueue()
-        open_set.add_task(start, priority=heuristic(start))
-        closed_set = set()
-        came_from = {}
-        g_score = defaultdict(lambda: float('inf'))
-        g_score[start] = 0
-        
-        f_score = defaultdict(lambda: float('inf'))
-        f_score[start] = heuristic(start)
-
-        current = open_set.pop_task()
-        while current:
-            closed_set.add(current)
-            if len(closed_set) %1000 == 0:
-                start.update_computation_progress(computation_progress, len(closed_set))
-
-            if current.is_goal():
-                return cls.reconstract_path(came_from, current)
-
-            for neighbor in current.next_states():
-                if neighbor in closed_set:
-                    continue
-                
-                tentative_g_score = g_score[current] + distance(current, neighbor)
-                if tentative_g_score < g_score[neighbor]:
-                    came_from[neighbor] = current
-                    g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = g_score[neighbor] + heuristic(neighbor)
-                    open_set.add_task(neighbor, priority=f_score[neighbor])
-            current = open_set.pop_task()
-        return None
-
-if __name__ == "__main__":
-    maze_or_board = "maze"
-    if maze_or_board == "maze":
-        start_maze = Maze.fixture_10_by_10()
-        print(start_maze)
-
-        path = AStar.a_star(start_maze, heuristic=Maze.h1)
-    
-    elif maze_or_board == "board":
-        start_board = Board.random()
-        print(start_board)
-        path = AStar.a_star(start_board, heuristic=Board.h2)
-    
-    if path:
-        print("path found")
-        for index, state in enumerate(path):
-            print("step", index)
-            print(state)
-    else :
-        print("no path is found. The state is considered as not solvable")
-
-        
-
-    
