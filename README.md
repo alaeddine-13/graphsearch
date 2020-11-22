@@ -9,3 +9,5 @@ For the 3x3 size, there are 362880 distinct states, and not all of them are poss
 
 ## Maze
 The problem consists in finding the shortest path from the start position to the end position. The maze is represented as a grid consisting in empty cells and wall cells. We provide 2 heuristics for A* algorithm which are the manhatten and euclidean distances between the player and the final position.
+
+#Algorithmes

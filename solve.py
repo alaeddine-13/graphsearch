@@ -20,7 +20,7 @@ if __name__ == "__main__":
     )
     parser.add_argument('--strategy',
         help="The algorithm used to solve the problem (a_star or dijkstra)",
-        default='a_star')
+        default='dijkstra')
     
     args = parser.parse_args()
     
@@ -40,7 +40,7 @@ if __name__ == "__main__":
             path = AStar.solve(start_board, heuristic=Board.h2)
         
         elif args.strategy == "dijkstra":
-            path = Dijkstra.solve(start_board, heuristic=Board.h2)
+            path = Dijkstra.solve(start_board)
         
     
     if path:

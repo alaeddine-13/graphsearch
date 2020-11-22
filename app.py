@@ -42,12 +42,15 @@ strategies = {
     "A*": {
         "class": AStar,
         "routable_params": ["heuristic"]
+    },
+    "Dijkstra": {
+        "class": Dijkstra,
+        
     }
 }
 
 st.title('Game Solving using Graph search')
 st.write("Pick a game and a strategy to solve it and then click the start button")
-
 chosen_game_name = st.sidebar.selectbox(
     'Which game do you want to solve?',
     list(games.keys()))
@@ -86,6 +89,10 @@ if generate_button:
     if path:
         computation_progress.done()
         st.write("path found")
+        index=0
+        board=start
+        st.write(f"step {index}")
+        st.markdown(board.render(), unsafe_allow_html=True)
         for index, board in enumerate(path):
             st.write(f"step {index}")
             st.markdown(board.render(), unsafe_allow_html=True)

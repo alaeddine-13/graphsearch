@@ -61,5 +61,35 @@ class AStar(Strategy):
 class Dijkstra(Strategy):
     @classmethod
     def solve(cls, start, computation_progress = None, 
-              distance = lambda state1, state2: 1):
-        pass
+               distance = lambda state1, state2: 1):
+        
+        distances = defaultdict(lambda: float('inf'))
+        distances[start] = 0
+        
+        open_set = PriorityQueue()
+        open_set.add_task(start, priority=distances[start])
+        
+        closed_set = set()
+        came_from = {}
+
+        current = open_set.pop_task()
+        while current:
+            closed_set.add(current)
+            print(len(closed_set))
+            if len(closed_set) %1000 == 0:
+                start.update_computation_progress(computation_progress, len(closed_set))
+
+            if current.is_goal():
+                return cls.reconstract_path(came_from, current)
+
+            for neighbor in current.next_states():
+                if neighbor in closed_set:
+                    continue
+                
+                new_distance = distances[current] + distance(current, neighbor)
+                if new_distance < distances[neighbor] :
+                    came_from[neighbor] = current
+                    distances[neighbor] = new_distance
+                    open_set.add_task(neighbor, priority=new_distance)
+            current = open_set.pop_task()
+        return None

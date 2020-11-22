@@ -250,6 +250,27 @@ class Maze(State):
                 res.maze[index[0]][index[1]] = cls.wall
         res.maze[cls.start_position[0]][cls.start_position[1]] = cls.player
         return res
+    """
+    @classmethod
+    def fixture_10_by_10(cls):
+        res = cls()
+        walls = [
+            (0, 4), (0, 5), (0, 6), (0, 6), (0, 7), (0, 8), (0, 9), (0, 10), (0, 11),(0, 12), (0, 13),(0, 14),(0, 15),
+            (1, 5), (1, 7), (1, 8), (1, 9),
+            (2, 3), (2, 5),
+            (3, 1), (3, 3), (3, 5), (3, 7), (3, 8),
+            (4, 1), (4, 3), (4, 5), (4, 7),
+            (5, 1), (5, 2), (5, 3), (5, 5), (5, 7), (5, 9),
+            (6, 1), (6, 5), (6, 7), (6, 9),
+            (7, 1), (7, 3), (7, 4), (7, 5), (7, 7), (7, 9),
+            (8, 0), (8, 7), (8, 9),
+            (9, 2), (9, 3), (9, 4), (9, 5), (9, 6), (9, 7),
+        ]
+        for index, element in np.ndenumerate(res.maze):
+            if index in walls:
+                res.maze[index[0]][index[1]] = cls.wall
+        res.maze[cls.start_position[0]][cls.start_position[1]] = cls.player
+        return res"""
 
 
     def __eq__(self, other):
