@@ -71,8 +71,7 @@ class AnalysisGraph():
     
     def done(self):
         self.graph_title.write(self.name)
-        plot = self.df[self.df["name"] == self.name]\
-            .plot(x='depth_len',y='visited_len',color='blue')
-        self.graph.pyplot(plot)
-        # self.graph.write(self.df)
+        self.df[self.df["name"] == self.name]\
+            .plot(kind='scatter', x='depth_len',y='visited_len',color='blue')
+        self.graph.pyplot(plt)
 

@@ -50,7 +50,7 @@ class AStar(Strategy):
             for neighbor in current.next_states():
                 #if neighbor in closed_set:
                 #    continue
-                
+
                 tentative_g_score = g_score[current] + distance(current, neighbor)
                 if tentative_g_score < g_score[neighbor]:
                     came_from[neighbor] = current
