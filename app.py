@@ -5,7 +5,7 @@ import time
 from operator import itemgetter
 from state import Board, Maze
 from strategy import AStar, Dijkstra
-from utils import ComputationProgress
+from utils import ComputationProgress, AnalysisGraph
 
 
 
@@ -82,12 +82,15 @@ if generate_button:
 
     st.markdown(start.render(), unsafe_allow_html=True)
     computation_progress = ComputationProgress()
+    analysis_graph = AnalysisGraph(name=f"{start.__class__.__name__} solved by "
+        f"{chosen_strategy['class'].__name__} using params {str(strategy_routable_params)}")
 
     path = chosen_strategy["class"].solve(
-        start, computation_progress=computation_progress,
+        start, computation_progress=computation_progress, analysis_graph=analysis_graph,
         **strategy_routable_params)
     if path:
         computation_progress.done()
+        analysis_graph.done()
         st.write("path found")
         index=0
         board=start

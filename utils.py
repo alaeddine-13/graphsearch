@@ -1,6 +1,8 @@
 from heapq import heappop, heappush
 import itertools
 import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
 
 class PriorityQueue():
     REMOVED = '<removed-task>'
@@ -46,3 +48,31 @@ class ComputationProgress():
     
     def fail(self):
         self.latest_iteration.text('No Path is found')
+
+class AnalysisGraph():
+    filename = "./analysis.csv"
+    
+    def __init__(self, name):
+        self.name = name
+        self.graph_title = st.empty()
+        self.graph = st.empty()
+        
+        try:
+            self.df = pd.read_csv(self.filename)
+        except FileNotFoundError:
+            self.df = pd.DataFrame({"name": [], "depth_len": [], "visited_len": []})
+
+    def update(self, depth_len, visited_len):
+        self.df = self.df.append(
+            {"name": self.name, "depth_len": depth_len, "visited_len": visited_len},
+            ignore_index=True
+        )
+        self.df.to_csv(self.filename, index=False)
+    
+    def done(self):
+        self.graph_title.write(self.name)
+        plot = self.df[self.df["name"] == self.name]\
+            .plot(x='depth_len',y='visited_len',color='blue')
+        self.graph.pyplot(plot)
+        # self.graph.write(self.df)
+

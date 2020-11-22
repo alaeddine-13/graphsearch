@@ -21,8 +21,8 @@ class Strategy(ABC):
 class AStar(Strategy):
     
     @classmethod
-    def solve(cls, start, computation_progress = None, 
-               heuristic = None, distance = lambda state1, state2: 1):
+    def solve(cls, start, computation_progress = None, analysis_graph = None,
+              heuristic = None, distance = lambda state1, state2: 1):
         if not start.is_solvable():
             return None
         open_set = PriorityQueue()
@@ -42,11 +42,14 @@ class AStar(Strategy):
                 start.update_computation_progress(computation_progress, len(closed_set))
 
             if current.is_goal():
-                return cls.reconstract_path(came_from, current)
+                result = cls.reconstract_path(came_from, current)
+                if analysis_graph:
+                    analysis_graph.update(len(result), len(closed_set))
+                return result
 
             for neighbor in current.next_states():
-                if neighbor in closed_set:
-                    continue
+                #if neighbor in closed_set:
+                #    continue
                 
                 tentative_g_score = g_score[current] + distance(current, neighbor)
                 if tentative_g_score < g_score[neighbor]:
