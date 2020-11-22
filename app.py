@@ -90,7 +90,6 @@ if generate_button:
         **strategy_routable_params)
     if path:
         computation_progress.done()
-        analysis_graph.done()
         st.write("path found")
         index=0
         board=start
@@ -99,6 +98,8 @@ if generate_button:
         for index, board in enumerate(path):
             st.write(f"step {index}")
             st.markdown(board.render(), unsafe_allow_html=True)
+        
+        analysis_graph.done()
     else :
         computation_progress.fail()
         st.write("no path is found. The state is considered as not solvable")

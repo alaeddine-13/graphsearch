@@ -54,8 +54,6 @@ class AnalysisGraph():
     
     def __init__(self, name):
         self.name = name
-        self.graph_title = st.empty()
-        self.graph = st.empty()
         
         try:
             self.df = pd.read_csv(self.filename)
@@ -70,8 +68,9 @@ class AnalysisGraph():
         self.df.to_csv(self.filename, index=False)
     
     def done(self):
-        self.graph_title.write(self.name)
+        st.write("Performance report:")
+        st.write(self.name)
         self.df[self.df["name"] == self.name]\
             .plot(kind='scatter', x='depth_len',y='visited_len',color='blue')
-        self.graph.pyplot(plt)
+        st.pyplot(plt)
 
