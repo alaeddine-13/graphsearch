@@ -1,4 +1,4 @@
-# Overview
+# Overview [![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/alaeddine-13/graphsearch/app.py)
 The project consists in applying graph search algorithms like A* and Dijkstra to solve problems in an efficient way. All problems are represented as classes that must implement the `State` abstract class. Graph search algorithms also must implement the `Strategy` abstract class.
 The project can be executed from the console or from the web interface, using a Streamlit app. The project is deployed here: https://ai.alaeddineabdessalem.com
 # Problems
